@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  nosqldb:
+    container_name: mongodb
+    image: mongo:latest
+    ports:
+      - "${NOSQLDB_PORT}:27017"
+    volumes:
+      # - '${PWD}/docker/volumes:/data/db'
+      - '${PWD}/docker/nosqldb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js'
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${NOSQLDB_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${NOSQLDB_INITDB_ROOT_PASSWORD}
+    networks:
+      - backend
+
+  api:
+    build: .
+    ports:
+      - "${PORT}:5000"
+    volumes:
+      - ${PWD}/:/home/node/project
+    restart: always
+    container_name: api
+    environment:
+      MONGO_USERNAME: ${NOSQLDB_INITDB_ROOT_USERNAME}
+      MONGO_PASSWORD: ${NOSQLDB_INITDB_ROOT_PASSWORD}
+      MONGO_DATABASE: ${NOSQLDB_DATABASE}
+      MONGO_PORT: ${NOSQLDB_PORT}
+      MONGO_HOST: ${NOSQLDB_HOST}
+      PORT: ${PORT}
+    depends_on:
+      - nosqldb
+    networks:
+      - backend
+
+networks:
+  backend:
